@@ -1,2 +1,2 @@
 wlinfo: wlinfo.c
-	$(CC) $(shell pkg-config --cflags --libs wayland-client) $< -o $@
+	$(CC) -g -Wall $(shell pkg-config --cflags --libs wayland-client) $< -o $@
