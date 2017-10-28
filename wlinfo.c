@@ -4,45 +4,33 @@
 
 #include <wayland-client.h>
 
+struct ctx {
+  struct wl_list outputs;
+  int need_newline;
+};
+
 struct output_t {
   int id;
   int size;
+  struct ctx *ctx;
   struct wl_output *output;
   struct wl_list link;
 };
-
-int need_newline = 0;
-struct wl_list outputs;
-
-static void print_id(struct wl_output *wl_output) {
-  struct output_t *out;
-  if (need_newline) {
-    putchar('\n');
-  } else {
-    need_newline = 1;
-  }
-  wl_list_for_each(out, &outputs, link) {
-    if (out->output == wl_output) {
-      printf("output %d\n---------\n", out->id);
-    }
-  }
-}
-
-static void destroy_outputs(void) {
-  struct output_t *out, *tmp;
-  wl_list_for_each_safe(out, tmp, &outputs, link) {
-    wl_output_destroy(out->output);
-    wl_list_remove(&out->link);
-    free(out);
-  }
-}
 
 static void output_handle_geometry(void *data, struct wl_output *wl_output,
                                    int32_t x, int32_t y, int32_t physical_width,
                                    int32_t physical_height, int32_t subpixel,
                                    const char *make, const char *model,
                                    int32_t output_transform) {
-  print_id(wl_output);
+  struct output_t *out = (struct output_t *)data;
+  if (out->ctx->need_newline) {
+    putchar('\n');
+  } else {
+    out->ctx->need_newline = 1;
+  }
+  out->size = physical_width * physical_height;
+  printf("output %d\n---------\n", out->id);
+
   printf("x: %d\n", x);
   printf("y: %d\n", y);
   printf("physical_width: %d\n", physical_width);
@@ -50,8 +38,6 @@ static void output_handle_geometry(void *data, struct wl_output *wl_output,
   printf("subpixel: %d\n", subpixel);
   printf("make: %s\n", make);
   printf("model: %s\n", model);
-
-  ((struct output_t *)data)->size = physical_width * physical_height;
 }
 
 static void output_handle_mode(void *data, struct wl_output *wl_output,
@@ -81,11 +67,13 @@ static void global_registry_handler(void *data, struct wl_registry *registry,
                                     uint32_t id, const char *interface,
                                     uint32_t version) {
   if (!strcmp(interface, "wl_output")) {
+    struct ctx *ctx = (struct ctx *)data;
     struct output_t *output = malloc(sizeof(struct output_t));
+    output->ctx = ctx;
     output->id = id;
     output->output =
         wl_registry_bind(registry, id, &wl_output_interface, version);
-    wl_list_insert(&outputs, &output->link);
+    wl_list_insert(&ctx->outputs, &output->link);
     wl_output_add_listener(output->output, &output_listener, output);
   }
 }
@@ -102,15 +90,23 @@ int main(int argc, char **argv) {
     fprintf(stderr, "wl_display_connect() failed\n");
     return 1;
   }
-  struct wl_registry *registry = wl_display_get_registry(display);
-  wl_registry_add_listener(registry, &registry_listener, NULL);
 
-  wl_list_init(&outputs);
+  struct ctx ctx;
+  ctx.need_newline = 0;
+  wl_list_init(&ctx.outputs);
+  struct wl_registry *registry = wl_display_get_registry(display);
+
+  wl_registry_add_listener(registry, &registry_listener, &ctx);
 
   wl_display_dispatch(display);
   wl_display_roundtrip(display);
 
-  destroy_outputs();
+  struct output_t *out, *tmp;
+  wl_list_for_each_safe(out, tmp, &ctx.outputs, link) {
+    wl_output_destroy(out->output);
+    wl_list_remove(&out->link);
+    free(out);
+  }
   wl_registry_destroy(registry);
   wl_display_disconnect(display);
   return 0;
