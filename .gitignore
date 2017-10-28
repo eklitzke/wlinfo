@@ -1,1 +1,6 @@
 wlinfo
+Makefile
+compile
+depcomp
+install-sh
+missing
