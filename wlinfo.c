@@ -6,6 +6,7 @@
 
 struct output_t {
   int id;
+  int size;
   struct wl_output *output;
   struct wl_list link;
 };
@@ -50,6 +51,8 @@ static void output_handle_geometry(void *data, struct wl_output *wl_output,
   printf("make: %s\n", make);
   printf("model: %s\n", model);
   printf("output_transform: %d\n", output_transform);
+
+  ((struct output_t *)data)->size = physical_width * physical_height;
 }
 
 static void output_handle_mode(void *data, struct wl_output *wl_output,
@@ -57,6 +60,10 @@ static void output_handle_mode(void *data, struct wl_output *wl_output,
                                int32_t refresh) {
   printf(" - width: %d\n", width);
   printf(" - height: %d\n", height);
+  double dots = width * height;
+  double dots_per_mm = dots / ((struct output_t *)data)->size;
+  double dots_per_in = dots_per_mm / 0.155;
+  printf(" - dpi: %.1f\n", dots_per_in);
 }
 
 static void output_handle_done(void *data, struct wl_output *wl_output) {}
