@@ -5,8 +5,8 @@
 #include <wayland-client.h>
 
 struct ctx {
-  struct wl_list outputs;
   int need_newline;
+  struct wl_list outputs;
 };
 
 struct output_t {
@@ -94,8 +94,8 @@ int main(int argc, char **argv) {
   struct ctx ctx;
   ctx.need_newline = 0;
   wl_list_init(&ctx.outputs);
-  struct wl_registry *registry = wl_display_get_registry(display);
 
+  struct wl_registry *registry = wl_display_get_registry(display);
   wl_registry_add_listener(registry, &registry_listener, &ctx);
 
   wl_display_dispatch(display);
