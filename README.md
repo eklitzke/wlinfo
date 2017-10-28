@@ -2,6 +2,40 @@ Wlinfo queries Wayland for information about physical displays connected to the
 system. It can print information about the physical dimensions of such displays,
 and screen resolution, and display scaling characteristics.
 
+The output looks like this:
+
+```
+output 4
+---------
+x: 0
+y: 0
+physical_width: 640
+physical_height: 400
+subpixel: 0
+make: DEL
+model: DELL U3014
+output_transform: 0
+ - width: 2560
+ - height: 1600
+ - dpi: 103.2
+ - scale: 1
+
+output 5
+---------
+x: 2560
+y: 0
+physical_width: 310
+physical_height: 170
+subpixel: 0
+make: MEI
+model: 0x96a2
+output_transform: 0
+ - width: 2560
+ - height: 1440
+ - dpi: 451.3
+ - scale: 2
+```
+
 My personal motivation for this code is to allow Emacs instances to pick an
 appropriate font size. This is necessary because I have a high-DPI laptop
 screen, and a low-DPI monitor that I sometimes attach to my laptop. Wayland
